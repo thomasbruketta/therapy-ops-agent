@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+.env
+artifacts/
+state/
+browser/*.json
+.idempotency_sent_keys.json

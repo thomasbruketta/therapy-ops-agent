@@ -1,10 +1,10 @@
 # therapy-ops-agent
 
-This repository now includes a dedicated scheduler process for recurring jobs.
+This repository includes a scheduler process and a runnable daily send workflow with dry-run support.
 
 ## Scheduler framework
 
-The project uses **APScheduler** (`BlockingScheduler` + `CronTrigger`) for reliable cron-style scheduling with explicit timezone support.
+The project uses **APScheduler** (`BlockingScheduler` + `CronTrigger`) for cron-style scheduling with explicit timezone support.
 
 ## Daily schedule
 
@@ -33,8 +33,26 @@ Start dedicated scheduler process (for production/background worker):
 python -m app.jobs.scheduler
 ```
 
-Run one-off/manual execution (without scheduler loop):
+Run one-off/manual execution through scheduler task (defaults to dry-run):
 
 ```bash
 python -m app.jobs.scheduler --once
 ```
+
+Run daily workflow directly in dry-run mode:
+
+```bash
+python -m app.jobs.acorn_daily_send --date 2026-01-15 --dry-run
+```
+
+Run daily workflow directly in confirm-send mode:
+
+```bash
+python -m app.jobs.acorn_daily_send --date 2026-01-15 --confirm-send
+```
+
+## Validation gates
+
+Use the staged validation matrix before promotion to confirm-send:
+
+- `docs/validation.md`
