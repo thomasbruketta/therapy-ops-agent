@@ -60,7 +60,7 @@ Reference `.env.example` for all required keys. At minimum you must provide:
 
 ### Example cron (UTC)
 ```cron
-*/15 * * * * cd /workspace/therapy-ops-agent && /usr/bin/env bash -lc 'source .env && acorn run --mode dry-run --window-minutes 20 >> artifacts/runs/scheduler.log 2>&1'
+*/15 * * * * cd /workspace/therapy-ops-agent && /usr/bin/env bash -lc 'set -a; source .env; set +a; acorn run --mode dry-run --window-minutes 20 >> artifacts/runs/scheduler.log 2>&1'
 ```
 
 ### Scheduler mode guidance
