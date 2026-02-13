@@ -1,0 +1,24 @@
+{
+  "run_id": "2026-02-13T10:00:00Z_dryrun_001",
+  "mode": "dry-run",
+  "source": {
+    "system": "simplepractice",
+    "access_method": "browser-automation",
+    "session_state": "browser/simplepractice_session.json"
+  },
+  "window": {
+    "since": "2026-02-13T09:00:00Z",
+    "until": "2026-02-13T10:00:00Z"
+  },
+  "totals": {
+    "evaluated": 24,
+    "eligible": 19,
+    "would_send": 17,
+    "skipped": 7,
+    "errors": 0
+  },
+  "notes": [
+    "No outbound API writes executed in dry-run mode.",
+    "SimplePractice data extracted via authenticated browser session."
+  ]
+}

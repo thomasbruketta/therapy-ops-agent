@@ -1,0 +1,28 @@
+{
+  "run_id": "2026-02-13T10:30:00Z_confirm_001",
+  "mode": "confirm-send",
+  "source": {
+    "system": "simplepractice",
+    "access_method": "browser-automation",
+    "session_state": "browser/simplepractice_session.json"
+  },
+  "window": {
+    "since": "2026-02-13T09:00:00Z",
+    "until": "2026-02-13T10:30:00Z"
+  },
+  "totals": {
+    "evaluated": 24,
+    "eligible": 19,
+    "sent": 17,
+    "skipped": 7,
+    "errors": 0
+  },
+  "idempotency": {
+    "store_path": "state/acorn_idempotency_store.json",
+    "new_keys_written": 17
+  },
+  "notes": [
+    "All outbound sends acknowledged by Acorn.",
+    "SimplePractice extraction completed with active browser session."
+  ]
+}
