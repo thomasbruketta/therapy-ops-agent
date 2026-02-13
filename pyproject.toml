@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "therapy-ops-agent"
+version = "0.1.0"
+description = "ACORN therapy operations automation"
+requires-python = ">=3.10"
+
+[project.scripts]
+acorn = "app.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

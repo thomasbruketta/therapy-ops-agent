@@ -7,7 +7,7 @@ This runbook describes how to configure, run, and troubleshoot the ACORN workflo
 ## 1) Setup
 
 ### Prerequisites
-- Python 3.10+ (or your runtime for the ACORN CLI/scheduler).
+- Python 3.10+.
 - Browser automation runtime used by your agent (for example, Playwright + Chromium).
 - Access to:
   - SimplePractice web user credentials with required permissions.
@@ -28,6 +28,10 @@ This runbook describes how to configure, run, and troubleshoot the ACORN workflo
 4. Create required directories:
    ```bash
    mkdir -p artifacts/runs artifacts/samples state browser
+   ```
+5. Install the project in editable mode to expose the `acorn` console command:
+   ```bash
+   pip install -e .
    ```
 
 ## 2) Credentials and Environment Variables
@@ -68,9 +72,7 @@ Reference `.env.example` for all required keys. At minimum you must provide:
 - **Controlled send windows:** execute a supervised `--mode confirm-send` run (manually or gated job) after triage review.
 - **Session hygiene:** refresh browser session state periodically (for example daily) and immediately after credential or MFA policy changes.
 
-## 4) Manual CLI Examples
-
-> Replace `acorn` with the actual executable if your deployment uses a different command.
+## 4) Manual Command Examples
 
 ### Refresh browser session state
 ```bash
@@ -100,6 +102,14 @@ acorn run \
 ### Narrow scope by patient/practitioner (example)
 ```bash
 acorn run --mode dry-run --client-id CL-20491 --practitioner-id PR-001
+```
+
+### Equivalent module invocations (no installed console script)
+```bash
+python -m app.cli run --mode dry-run --window-minutes 20
+python -m app.jobs.scheduler
+python -m app.jobs.scheduler --once
+python -m app.jobs.acorn_daily_send --date 2026-02-13 --dry-run
 ```
 
 ## 5) Safety Notes: Dry-Run vs Confirm-Send
@@ -149,33 +159,3 @@ acorn run --mode dry-run --client-id CL-20491 --practitioner-id PR-001
 - Verify `ACORN_ARTIFACT_ROOT` exists and is writable.
 - Ensure path templates resolve to valid directories.
 - Check disk space and inode exhaustion.
-
-## 7) Triage Interpretation Guide
-
-Use triage output to decide whether to proceed to confirm-send.
-
-### Severity levels
-- **Critical**: stop; do not confirm-send until resolved.
-- **High**: resolve unless an explicit exception is approved.
-- **Medium**: acceptable for dry-run; assess impact before confirm-send.
-- **Low/Info**: operational notes; monitor trends.
-
-### Decision matrix
-- **No Critical + no High + expected volume** → safe to schedule/execute confirm-send.
-- **Any Critical** → block confirm-send, open incident.
-- **High severity extraction/login errors** → block and route to automation owner.
-- **Only Medium/Low warnings** → operator discretion with documented approval.
-
-### Triage routing
-- Login/session/MFA issues → platform/automation owner.
-- Mapping/schema issues → integration engineer.
-- Clinical/business rule conflicts → operations lead.
-- Repeated idempotency anomalies → data reliability on-call.
-
-## 8) Sample Artifacts Location
-
-Sample outputs are committed under:
-- `docs/samples/summary_dry_run.json`
-- `docs/samples/triage_dry_run.md`
-- `docs/samples/summary_confirm_send.json`
-- `docs/samples/triage_confirm_send.md`
