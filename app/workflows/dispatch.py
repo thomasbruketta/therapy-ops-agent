@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 from app.reporting.summary import compute_summary
 from app.reporting.triage import write_triage_outputs
-from app.utils.logging import get_structured_logger, log_workflow_event
+from app.utils.logging import get_structured_logger, log_workflow_event, mask_client_name
 
 
 SendFn = Callable[[dict[str, Any]], bool]
@@ -30,7 +30,7 @@ def run_dispatch_workflow(
     for appointment in appointments:
         client_name = appointment.get("client_name", "")
         record: dict[str, Any] = {
-            "client_name": client_name,
+            "client_name": mask_client_name(client_name),
             "idempotency_key": idempotency_key,
         }
 
