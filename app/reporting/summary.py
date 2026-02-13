@@ -9,6 +9,9 @@ from typing import Any
 def compute_summary(records: list[dict[str, Any]], total_appointments: int) -> dict[str, Any]:
     """Compute aggregate reporting stats from workflow records."""
     status_counts = Counter(record.get("status") for record in records)
+    completed_attempts = status_counts.get("sent", 0) + status_counts.get("failed", 0)
+    attempted_only = status_counts.get("attempted", 0)
+    attempted_sends = completed_attempts or attempted_only
 
     skipped_reasons = Counter(
         record.get("reason", "unknown")
@@ -23,7 +26,7 @@ def compute_summary(records: list[dict[str, Any]], total_appointments: int) -> d
 
     return {
         "total_appointments": total_appointments,
-        "attempted_sends": status_counts.get("attempted", 0),
+        "attempted_sends": attempted_sends,
         "successful_sends": status_counts.get("sent", 0),
         "skipped": {
             "total": status_counts.get("skipped", 0),

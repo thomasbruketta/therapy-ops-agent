@@ -55,8 +55,6 @@ def run_dispatch_workflow(
             status="attempted",
             message="Attempting send",
         )
-        records.append({**record, "status": "attempted"})
-
         try:
             sent = send_fn(appointment)
             if sent:

@@ -37,6 +37,7 @@ def test_dry_run_writes_triage_without_sending(tmp_path: Path) -> None:
 
     payload = json.loads(json_path.read_text())
     assert payload["summary"]["skipped"]["total"] == 2
+    assert len(payload["records"]) == 2
 
 
 def test_non_dry_run_attempts_send_and_tracks_failures(tmp_path: Path) -> None:
@@ -62,3 +63,4 @@ def test_non_dry_run_attempts_send_and_tracks_failures(tmp_path: Path) -> None:
     assert result["summary"]["attempted_sends"] == 2
     assert result["summary"]["successful_sends"] == 1
     assert result["summary"]["failed"]["reasons"] == {"RuntimeError": 1}
+    assert len(result["records"]) == 2
