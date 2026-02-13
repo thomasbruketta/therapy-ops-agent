@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import date
+from datetime import date as Date
 
 
 def _parse_args() -> argparse.Namespace:
@@ -11,7 +11,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--date",
         required=True,
-        type=date.fromisoformat,
+        type=Date.fromisoformat,
         help="Target date in YYYY-MM-DD format.",
     )
     mode_group = parser.add_mutually_exclusive_group()
@@ -28,18 +28,18 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def run(job_date: date, dry_run: bool, confirm_send: bool) -> None:
+def run(date: Date, dry_run: bool, confirm_send: bool) -> None:
     """Orchestrate the daily send job."""
     mode = "DRY-RUN" if dry_run else "CONFIRMED SEND"
-    print(f"Running acorn_daily_send for {job_date.isoformat()} [{mode}]")
+    print(f"Running acorn_daily_send for {date.isoformat()} [{mode}]")
     # TODO: Wire real adapters/domain orchestration here.
 
 
 def main() -> None:
     args = _parse_args()
     confirm_send = bool(args.confirm_send)
-    dry_run = not confirm_send
-    run(job_date=args.date, dry_run=dry_run, confirm_send=confirm_send)
+    dry_run = bool(args.dry_run) or not confirm_send
+    run(date=args.date, dry_run=dry_run, confirm_send=confirm_send)
 
 
 if __name__ == "__main__":
