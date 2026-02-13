@@ -56,11 +56,11 @@ class AcornAdapterUI:
                 time.sleep(delay_s)
         raise RuntimeError(f"Unreachable retry state for action={action}") from last_exc
 
-    def login(self) -> None:
+    def login(self, email: str, password: str) -> None:
         def _login() -> None:
             self.page.goto("https://app.acorn.com/login", wait_until="domcontentloaded")
-            self.page.locator("input[name='email']").wait_for(state="visible", timeout=10_000)
-            self.page.locator("input[name='password']").wait_for(state="visible", timeout=10_000)
+            self.page.locator("input[name='email']").fill(email, timeout=10_000)
+            self.page.locator("input[name='password']").fill(password, timeout=10_000)
             self.page.locator("button[type='submit']").click(timeout=10_000)
             self.page.locator("[data-testid='dashboard'], .dashboard").first.wait_for(timeout=15_000)
 
