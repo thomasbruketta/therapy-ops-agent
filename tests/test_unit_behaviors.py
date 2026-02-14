@@ -11,7 +11,7 @@ def test_client_id_normalization_including_punctuation_case(sut_module):
         "normalize_client_identifier",
     )
 
-    assert normalize_client_id("Thomas J. Bruketta") == "thomasbruketta"
+    assert normalize_client_id("Jane Q. Example") == "janeexample"
 
 
 def test_phone_validation_and_normalization(sut_module):
@@ -45,7 +45,7 @@ def test_idempotency_key_generation_and_duplicate_detection(sut_module):
     )
 
     appt = {
-        "client_name": "Thomas J. Bruketta",
+        "client_name": "Jane Q. Example",
         "appointment_date": date(2026, 1, 1),
         "appointment_time": "09:00",
     }

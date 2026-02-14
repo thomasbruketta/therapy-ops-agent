@@ -26,7 +26,7 @@ def test_dry_run_writes_artifacts_and_does_not_require_playwright(
 ) -> None:
     recipients_path = tmp_path / "recipients.json"
     recipients_path.write_text(
-        '[{"full_name":"Thomas Bruketta","phone":"+13108016045"}]',
+        '[{"full_name":"Jane Testuser","phone":"+15555550123"}]',
         encoding="utf-8",
     )
     monkeypatch.setenv("ACORN_ARTIFACT_ROOT", str(tmp_path / "artifacts"))
