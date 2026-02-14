@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -21,6 +22,7 @@ PACIFIC_TZ = ZoneInfo("America/Los_Angeles")
 JOB_ID = "acorn_daily_send"
 
 logger = logging.getLogger(__name__)
+ALLOWED_WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
 def configure_logging() -> None:
@@ -55,11 +57,35 @@ def _log_job_state(scheduler: BlockingScheduler, event: JobExecutionEvent) -> No
     logger.info("Job %s completed at %s; next run at %s", event.job_id, last_run_at, next_run)
 
 
+def resolve_work_days() -> str:
+    """Resolve scheduler weekdays from environment.
+
+    Priority:
+    1) ACORN_WORK_DAYS
+    2) WORK_DAYS
+    3) default Tue-Fri
+    """
+    raw = (
+        os.getenv("ACORN_WORK_DAYS")
+        or os.getenv("WORK_DAYS")
+        or "tue,wed,thu,fri"
+    )
+    values = [item.strip().lower()[:3] for item in raw.split(",") if item.strip()]
+    deduped: list[str] = []
+    for day in values:
+        if day in ALLOWED_WEEKDAYS and day not in deduped:
+            deduped.append(day)
+    if not deduped:
+        deduped = ["tue", "wed", "thu", "fri"]
+    return ",".join(deduped)
+
+
 def build_scheduler() -> BlockingScheduler:
     """Build and configure the scheduler instance."""
     scheduler = BlockingScheduler(timezone=PACIFIC_TZ)
+    work_days = resolve_work_days()
 
-    trigger = CronTrigger(hour=8, minute=0, timezone=PACIFIC_TZ)
+    trigger = CronTrigger(day_of_week=work_days, hour=8, minute=0, timezone=PACIFIC_TZ)
     scheduler.add_job(
         acorn_daily_send,
         trigger=trigger,
@@ -76,9 +102,10 @@ def build_scheduler() -> BlockingScheduler:
 
     next_run = trigger.get_next_fire_time(None, datetime.now(tz=PACIFIC_TZ))
     logger.info(
-        "Registered %s for 08:00 %s (next run: %s)",
+        "Registered %s for 08:00 %s on [%s] (next run: %s)",
         JOB_ID,
         PACIFIC_TZ.key,
+        work_days,
         next_run.isoformat() if next_run else "none",
     )
 

@@ -1,2 +1,12 @@
 __pycache__/
 *.pyc
+
+# Local secrets and runtime state
+.env.local
+.env.*.local
+browser/
+state/
+artifacts/
+
+# Local browser probing tools
+node_modules/

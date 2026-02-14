@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 import time
@@ -9,7 +10,7 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
 
-@dataclass(slots=True)
+@dataclass
 class SendResult:
     success: bool
     context: dict[str, Any]
@@ -21,9 +22,20 @@ T = TypeVar("T")
 class AcornAdapterUI:
     """UI adapter for Acorn interactions via Playwright."""
 
-    def __init__(self, page: Page, screenshots_dir: Path | str = "artifacts/screenshots") -> None:
+    def __init__(
+        self,
+        page: Page,
+        screenshots_dir: Path | str = "/tmp/therapy-ops-agent/artifacts/screenshots",
+        login_url: str | None = None,
+        mobile_form_url: str | None = None,
+    ) -> None:
         self.page = page
         self.screenshots_dir = Path(screenshots_dir) / "acorn"
+        self.login_url = login_url or os.getenv("ACORN_LOGIN_URL", "https://www.cci-acorn.org/login.asp")
+        self.mobile_form_url = mobile_form_url or os.getenv(
+            "ACORN_MOBILE_FORM_URL",
+            "https://www.cci-acorn.org/mobileforminit.asp",
+        )
 
     def _capture_failure_screenshot(self, action: str) -> Path:
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
@@ -56,41 +68,64 @@ class AcornAdapterUI:
                 time.sleep(delay_s)
         raise RuntimeError(f"Unreachable retry state for action={action}") from last_exc
 
-    def login(self, email: str, password: str) -> None:
+    def login(self, username: str, password: str) -> None:
         def _login() -> None:
-            self.page.goto("https://app.acorn.com/login", wait_until="domcontentloaded")
-            self.page.locator("input[name='email']").fill(email, timeout=10_000)
-            self.page.locator("input[name='password']").fill(password, timeout=10_000)
-            self.page.locator("button[type='submit']").click(timeout=10_000)
-            self.page.locator("[data-testid='dashboard'], .dashboard").first.wait_for(timeout=15_000)
+            self.page.goto(self.login_url, wait_until="domcontentloaded")
+            self.page.locator("#uid").fill(username, timeout=10_000)
+            self.page.locator("#pwd").fill(password, timeout=10_000)
+            self.page.locator("#submit1").click(timeout=10_000)
+            self.page.wait_for_url("**/index.asp", timeout=20_000)
 
         self._retry_transient("login", _login)
 
     def open_mobile_forms(self) -> None:
         def _open() -> None:
-            self.page.locator("a[href*='mobile-forms'], [data-testid='mobile-forms-nav']").first.click(timeout=10_000)
-            self.page.locator("[data-testid='mobile-forms-page'], .mobile-forms-page").first.wait_for(timeout=12_000)
+            self.page.goto(self.mobile_form_url, wait_until="domcontentloaded")
+            self.page.locator("#mform").wait_for(timeout=12_000)
 
         self._retry_transient("open_mobile_forms", _open)
 
-    def send_mobile_form(self, form_type: str, client_id: str, phone: str, message: str) -> SendResult:
+    def send_mobile_form(
+        self,
+        *,
+        clinician_id: str,
+        form_value: str,
+        client_id: str,
+        phone: str,
+        message: str,
+        send_via: str = "text",
+        start_session: int = 0,
+        text_from: str = "ACORN",
+    ) -> SendResult:
         def _send() -> SendResult:
-            self.page.locator("[data-testid='new-mobile-form'], button:has-text('New Form')").first.click(timeout=10_000)
-            self.page.locator("select[name='formType'], [data-testid='form-type']").first.select_option(value=form_type)
-            self.page.locator("input[name='clientId'], [data-testid='client-id']").first.fill(client_id)
-            self.page.locator("input[name='phone'], [data-testid='phone']").first.fill(phone)
-            self.page.locator("textarea[name='message'], [data-testid='message']").first.fill(message)
-            self.page.locator("button[type='submit'], [data-testid='send-mobile-form']").first.click(timeout=10_000)
-            confirmation = self.page.locator("[data-testid='send-success'], .send-success").first
-            confirmation.wait_for(timeout=12_000)
+            self.open_mobile_forms()
+
+            self.page.locator("#cid").select_option(clinician_id)
+            self.page.locator("#mform").select_option(form_value)
+            self.page.locator("#client").fill(client_id)
+            self.page.locator("input[name='startsess']").fill(str(start_session))
+            self.page.locator("#sendvia").select_option(send_via)
+            self.page.locator("#submit0").click(timeout=10_000)
+
+            self.page.locator("#textphone").wait_for(timeout=12_000)
+            self.page.locator("#textphone").fill(phone)
+            self.page.locator("#from").fill(text_from)
+            self.page.locator("#emailmsg").fill(message)
+            self.page.locator("#submit0").click(timeout=10_000)
+            self.page.wait_for_timeout(2_000)
+
+            body_text = self.page.locator("body").inner_text(timeout=10_000)
+            success = ("Sending Text to" in body_text) and (phone in body_text)
 
             return SendResult(
-                success=True,
+                success=success,
                 context={
-                    "form_type": form_type,
+                    "clinician_id": clinician_id,
+                    "form_value": form_value,
                     "client_id": client_id,
                     "phone": phone,
-                    "confirmation_text": (confirmation.text_content() or "").strip(),
+                    "send_via": send_via,
+                    "body_snippet": body_text[:800],
                 },
             )
 
@@ -98,11 +133,8 @@ class AcornAdapterUI:
 
     def verify_send_success(self, send_result_context: dict[str, Any]) -> bool:
         def _verify() -> bool:
-            confirmation = self.page.locator("[data-testid='send-success'], .send-success").first
-            confirmation.wait_for(timeout=8_000)
-            text = (confirmation.text_content() or "").lower()
-            client_id = str(send_result_context.get("client_id", "")).lower()
-            phone = str(send_result_context.get("phone", "")).lower()
-            return ("sent" in text) and ((client_id in text) or (phone in text) or (not client_id and not phone))
+            body = self.page.locator("body").inner_text(timeout=8_000)
+            phone = str(send_result_context.get("phone", ""))
+            return ("Sending Text to" in body) and (phone in body)
 
         return self._retry_transient("verify_send_success", _verify)

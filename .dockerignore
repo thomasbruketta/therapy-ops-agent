@@ -1,0 +1,9 @@
+.git
+.env.local
+.env
+artifacts/
+browser/
+state/
+node_modules/
+__pycache__/
+*.pyc

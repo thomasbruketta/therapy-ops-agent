@@ -1,0 +1,26 @@
+services:
+  therapy-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: therapy-ops-agent:local
+    working_dir: /workspace
+    user: "10001:10001"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+      - /tmp/therapy-ops-agent
+    env_file:
+      - .env.local
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      ACORN_ARTIFACT_ROOT: /tmp/therapy-ops-agent/artifacts/runs
+      ACORN_IDEMPOTENCY_STORE_PATH: /tmp/therapy-ops-agent/state/acorn_idempotency_store.json
+      SIMPLEPRACTICE_SESSION_STATE_PATH: /tmp/therapy-ops-agent/browser/simplepractice_session.json
+    command: ["python", "-m", "app.jobs.scheduler"]

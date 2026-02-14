@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-DEFAULT_STORE_PATH = Path(".idempotency_sent_keys.json")
+DEFAULT_STORE_PATH = Path("/tmp/therapy-ops-agent/state/acorn_idempotency_store.json")
 
 
 def build_idempotency_key(date: str, client_id: str) -> str:
@@ -27,6 +27,7 @@ class IdempotencyStore:
         return {item for item in payload if isinstance(item, str)}
 
     def _save(self, keys: set[str]) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(
             json.dumps(sorted(keys), indent=2),
             encoding="utf-8",
