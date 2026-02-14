@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+import hashlib
+import os
 from datetime import datetime, timezone
 from typing import Any
 
@@ -35,14 +37,12 @@ class JsonFormatter(logging.Formatter):
 
 
 def mask_client_name(name: str) -> str:
-    """Mask a client name while keeping enough entropy for debugging."""
+    """Return a deterministic non-reversible token for client name."""
     if not name:
         return ""
-
-    visible = 1
-    if len(name) <= visible:
-        return "*"
-    return f"{name[:visible]}{'*' * (len(name) - visible)}"
+    salt = os.getenv("ACORN_PRIVACY_SALT", "therapy-ops")
+    digest = hashlib.sha256(f"{salt}|{name}".encode("utf-8")).hexdigest()[:12]
+    return f"anon_{digest}"
 
 
 def get_structured_logger(name: str = "therapy_ops") -> logging.Logger:

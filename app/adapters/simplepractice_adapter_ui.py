@@ -49,11 +49,22 @@ class SimplePracticeAdapterUI:
             session_state_path
             or os.getenv("SIMPLEPRACTICE_SESSION_STATE_PATH", "/tmp/therapy-ops-agent/browser/simplepractice_session.json")
         )
+        self._validate_secure_url(self.base_url, "SIMPLEPRACTICE_BASE_URL")
+
+    @staticmethod
+    def _validate_secure_url(url: str, env_name: str) -> None:
+        allow_insecure = os.getenv("ACORN_ALLOW_INSECURE_URLS", "false").strip().lower() == "true"
+        if allow_insecure:
+            return
+        if not url.lower().startswith("https://"):
+            raise ValueError(f"{env_name} must use https unless ACORN_ALLOW_INSECURE_URLS=true")
 
     def _capture_failure_screenshot(self, action: str) -> Path:
-        self.screenshots_dir.mkdir(parents=True, exist_ok=True)
+        self.screenshots_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(self.screenshots_dir, 0o700)
         path = self.screenshots_dir / f"{int(time.time() * 1000)}_{action}.png"
         self.page.screenshot(path=str(path), full_page=True)
+        os.chmod(path, 0o600)
         return path
 
     @staticmethod
@@ -111,8 +122,10 @@ class SimplePracticeAdapterUI:
         self._retry_transient("login", _login)
 
     def save_session_state(self) -> Path:
-        self.session_state_path.parent.mkdir(parents=True, exist_ok=True)
+        self.session_state_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(self.session_state_path.parent, 0o700)
         self.page.context.storage_state(path=str(self.session_state_path))
+        os.chmod(self.session_state_path, 0o600)
         return self.session_state_path
 
     def has_authenticated_session(self) -> bool:

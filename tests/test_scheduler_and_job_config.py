@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from app.jobs import acorn_daily_send
 from app.jobs import scheduler
 
@@ -41,3 +43,17 @@ def test_dry_run_writes_artifacts_and_does_not_require_playwright(
 
     assert Path(result["summary_path"]).exists()
     assert Path(result["triage_path"]).exists()
+
+
+def test_confirm_send_requires_explicit_enable_flag(monkeypatch) -> None:
+    monkeypatch.delenv("ACORN_ENABLE_CONFIRM_SEND", raising=False)
+
+    with pytest.raises(ValueError, match="Confirm-send is disabled"):
+        acorn_daily_send.run(
+            date=date(2026, 2, 13),
+            dry_run=False,
+            confirm_send=True,
+            recipients_path="unused.json",
+            inline_recipients=["Jane Testuser|+15555550123"],
+            recipient_source="recipients",
+        )

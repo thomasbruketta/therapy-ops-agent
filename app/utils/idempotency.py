@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 
@@ -27,11 +28,13 @@ class IdempotencyStore:
         return {item for item in payload if isinstance(item, str)}
 
     def _save(self, keys: set[str]) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(self.path.parent, 0o700)
         self.path.write_text(
             json.dumps(sorted(keys), indent=2),
             encoding="utf-8",
         )
+        os.chmod(self.path, 0o600)
 
     def has_been_sent(self, key: str) -> bool:
         return key in self._load()

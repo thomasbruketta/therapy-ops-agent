@@ -45,7 +45,8 @@ def main() -> None:
             "/tmp/therapy-ops-agent/artifacts/selector_probe",
         )
     )
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(out_dir, 0o700)
     state_path = Path(
         os.environ.get(
             "SIMPLEPRACTICE_SESSION_STATE_PATH",
@@ -70,13 +71,17 @@ def main() -> None:
             page.wait_for_timeout(2_000)
             snap = _page_snapshot(page)
             tag = "calendar" if "calendar" in url else "clients"
-            page.screenshot(path=str(out_dir / f"sp_authenticated_{tag}.png"), full_page=True)
+            screenshot_path = out_dir / f"sp_authenticated_{tag}.png"
+            page.screenshot(path=str(screenshot_path), full_page=True)
+            os.chmod(screenshot_path, 0o600)
             results.append(snap)
 
-        (out_dir / "sp_authenticated_probe.json").write_text(
+        probe_path = out_dir / "sp_authenticated_probe.json"
+        probe_path.write_text(
             json.dumps(results, indent=2),
             encoding="utf-8",
         )
+        os.chmod(probe_path, 0o600)
 
         context.close()
         browser.close()

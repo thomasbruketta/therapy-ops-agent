@@ -30,6 +30,17 @@ For one-off runs:
 
 ```bash
 make dryrun DATE=2026-02-14
+ACORN_ENABLE_CONFIRM_SEND=true make confirm-send DATE=2026-02-14
+```
+
+`confirm-send` is fail-closed and requires explicit opt-in:
+
+```bash
+# either export it in shell for one command...
+ACORN_ENABLE_CONFIRM_SEND=true make confirm-send DATE=2026-02-14
+
+# ...or set in .env.local before planned send windows
+# ACORN_ENABLE_CONFIRM_SEND=true
 make confirm-send DATE=2026-02-14
 ```
 
@@ -46,6 +57,8 @@ docker compose run --rm therapy-agent python -m app.jobs.simplepractice_probe
 ```
 
 Probe output defaults to `/tmp/therapy-ops-agent/artifacts/selector_probe` and can be overridden with `SIMPLEPRACTICE_PROBE_OUTPUT_DIR`.
+
+HTTPS is enforced for `ACORN_LOGIN_URL`, `ACORN_MOBILE_FORM_URL`, and `SIMPLEPRACTICE_BASE_URL` unless `ACORN_ALLOW_INSECURE_URLS=true` is explicitly set for local debugging.
 
 ## PHI handling
 

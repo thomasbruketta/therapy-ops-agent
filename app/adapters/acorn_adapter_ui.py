@@ -36,11 +36,23 @@ class AcornAdapterUI:
             "ACORN_MOBILE_FORM_URL",
             "https://www.cci-acorn.org/mobileforminit.asp",
         )
+        self._validate_secure_url(self.login_url, "ACORN_LOGIN_URL")
+        self._validate_secure_url(self.mobile_form_url, "ACORN_MOBILE_FORM_URL")
+
+    @staticmethod
+    def _validate_secure_url(url: str, env_name: str) -> None:
+        allow_insecure = os.getenv("ACORN_ALLOW_INSECURE_URLS", "false").strip().lower() == "true"
+        if allow_insecure:
+            return
+        if not url.lower().startswith("https://"):
+            raise ValueError(f"{env_name} must use https unless ACORN_ALLOW_INSECURE_URLS=true")
 
     def _capture_failure_screenshot(self, action: str) -> Path:
-        self.screenshots_dir.mkdir(parents=True, exist_ok=True)
+        self.screenshots_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(self.screenshots_dir, 0o700)
         path = self.screenshots_dir / f"{int(time.time() * 1000)}_{action}.png"
         self.page.screenshot(path=str(path), full_page=True)
+        os.chmod(path, 0o600)
         return path
 
     @staticmethod

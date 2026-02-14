@@ -17,6 +17,7 @@ dryrun:
 	$(DC) run --rm therapy-agent python -m app.jobs.acorn_daily_send --date $(DATE) --dry-run --source simplepractice
 
 confirm-send:
+	@if [ "$$ACORN_ENABLE_CONFIRM_SEND" != "true" ]; then echo "ACORN_ENABLE_CONFIRM_SEND=true is required for live sends"; exit 1; fi
 	$(DC) run --rm therapy-agent python -m app.jobs.acorn_daily_send --date $(DATE) --confirm-send --source simplepractice
 
 refresh-session:

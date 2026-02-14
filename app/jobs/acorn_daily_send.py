@@ -31,6 +31,10 @@ class Recipient:
     phone: str
 
 
+def _confirm_send_enabled() -> bool:
+    return os.getenv("ACORN_ENABLE_CONFIRM_SEND", "false").strip().lower() == "true"
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the Acorn daily send job.")
     parser.add_argument(
@@ -355,6 +359,10 @@ def run(
         for recipient in recipients:
             _process_recipient(recipient, sender=None)
     else:
+        if not _confirm_send_enabled():
+            raise ValueError(
+                "Confirm-send is disabled. Set ACORN_ENABLE_CONFIRM_SEND=true to allow live sends."
+            )
         acorn_user = os.getenv("ACORN_USERNAME", "").strip()
         acorn_password = os.getenv("ACORN_PASSWORD", "").strip()
         if not acorn_user or not acorn_password:
