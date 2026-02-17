@@ -17,6 +17,8 @@ RUN pip install --no-cache-dir -r /workspace/requirements.txt
 
 # Non-root runtime user.
 RUN useradd --create-home --uid 10001 appuser
+RUN mkdir -p /runtime/artifacts/runs /runtime/state /runtime/browser \
+    && chown -R appuser:appuser /runtime
 
 COPY . /workspace
 RUN chown -R appuser:appuser /workspace

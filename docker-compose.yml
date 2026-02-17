@@ -13,14 +13,20 @@ services:
       - ALL
     tmpfs:
       - /tmp
-      - /tmp/therapy-ops-agent
+    volumes:
+      - therapy-agent-runtime:/runtime
     env_file:
       - .env.local
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
       PYTHONPYCACHEPREFIX: /tmp/pycache
-      ACORN_ARTIFACT_ROOT: /tmp/therapy-ops-agent/artifacts/runs
-      ACORN_IDEMPOTENCY_STORE_PATH: /tmp/therapy-ops-agent/state/acorn_idempotency_store.json
-      SIMPLEPRACTICE_SESSION_STATE_PATH: /tmp/therapy-ops-agent/browser/simplepractice_session.json
+      ACORN_RUNTIME_ROOT: /runtime
+      ACORN_ARTIFACT_ROOT: /runtime/artifacts/runs
+      ACORN_IDEMPOTENCY_STORE_PATH: /runtime/state/acorn_idempotency_store.json
+      SIMPLEPRACTICE_SESSION_STATE_PATH: /runtime/browser/simplepractice_session.json
+      SIMPLEPRACTICE_PROBE_OUTPUT_DIR: /runtime/artifacts/selector_probe
     command: ["python", "-m", "app.jobs.scheduler"]
+
+volumes:
+  therapy-agent-runtime:

@@ -9,7 +9,7 @@ Default recommended run model is container-first:
 - non-root container user (`uid=10001`)
 - read-only root filesystem
 - dropped Linux capabilities + `no-new-privileges`
-- runtime data only in container tmpfs (`/tmp/therapy-ops-agent`)
+- runtime state persisted in Docker volume at `/runtime`
 - no PHI/session artifacts written into the repo workspace
 
 Build and run with:
@@ -58,15 +58,15 @@ To probe authenticated SimplePractice pages for selector discovery:
 docker compose run --rm therapy-agent python -m app.jobs.simplepractice_probe
 ```
 
-Probe output defaults to `/tmp/therapy-ops-agent/artifacts/selector_probe` and can be overridden with `SIMPLEPRACTICE_PROBE_OUTPUT_DIR`.
+Probe output defaults to `/runtime/artifacts/selector_probe` in container mode and can be overridden with `SIMPLEPRACTICE_PROBE_OUTPUT_DIR`.
 
 HTTPS is enforced for `ACORN_LOGIN_URL`, `ACORN_MOBILE_FORM_URL`, and `SIMPLEPRACTICE_BASE_URL` unless `ACORN_ALLOW_INSECURE_URLS=true` is explicitly set for local debugging.
 
 ## PHI handling
 
-- Runtime outputs default to `/tmp/therapy-ops-agent/...` (ephemeral storage).
+- Runtime outputs default to `/runtime/...` (Docker volume storage, not repo workspace).
 - Run artifacts are redacted and use recipient tokens rather than names/phone numbers.
-- Browser session state defaults to `/tmp/therapy-ops-agent/browser/simplepractice_session.json`.
+- Browser session state defaults to `/runtime/browser/simplepractice_session.json` and persists across `docker compose run` calls.
 - To delete all runtime data immediately, run: `make purge-runtime`
 
 ## Host approval policy
