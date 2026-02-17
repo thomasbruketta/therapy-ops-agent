@@ -57,3 +57,22 @@ def test_confirm_send_requires_explicit_enable_flag(monkeypatch) -> None:
             inline_recipients=["Jane Testuser|+15555550123"],
             recipient_source="recipients",
         )
+
+
+@pytest.mark.parametrize("clinician_id", ["", "ALL", "replace_me"])
+def test_confirm_send_requires_specific_acorn_clinician_id(monkeypatch, clinician_id: str) -> None:
+    monkeypatch.setenv("ACORN_ENABLE_CONFIRM_SEND", "true")
+    if clinician_id:
+        monkeypatch.setenv("ACORN_CLINICIAN_ID", clinician_id)
+    else:
+        monkeypatch.delenv("ACORN_CLINICIAN_ID", raising=False)
+
+    with pytest.raises(ValueError, match="ACORN_CLINICIAN_ID is required"):
+        acorn_daily_send.run(
+            date=date(2026, 2, 13),
+            dry_run=False,
+            confirm_send=True,
+            recipients_path="unused.json",
+            inline_recipients=["Jane Testuser|+15555550123"],
+            recipient_source="recipients",
+        )

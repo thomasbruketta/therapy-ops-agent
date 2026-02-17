@@ -44,6 +44,8 @@ ACORN_ENABLE_CONFIRM_SEND=true make confirm-send DATE=2026-02-14
 make confirm-send DATE=2026-02-14
 ```
 
+`confirm-send` also requires `ACORN_CLINICIAN_ID` to be set to a specific clinician value (not blank, `ALL`, or `replace_me`).
+
 To refresh SimplePractice session state:
 
 ```bash

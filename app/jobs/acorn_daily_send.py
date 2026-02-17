@@ -35,6 +35,15 @@ def _confirm_send_enabled() -> bool:
     return os.getenv("ACORN_ENABLE_CONFIRM_SEND", "false").strip().lower() == "true"
 
 
+def _resolve_acorn_clinician_id() -> str:
+    clinician_id = os.getenv("ACORN_CLINICIAN_ID", "").strip()
+    if not clinician_id or clinician_id.lower() in {"all", "replace_me"}:
+        raise ValueError(
+            "ACORN_CLINICIAN_ID is required for confirm-send mode and must be a specific clinician ID."
+        )
+    return clinician_id
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the Acorn daily send job.")
     parser.add_argument(
@@ -299,6 +308,7 @@ def run(
     errors = 0
     new_keys_written = 0
     findings: list[str] = []
+    acorn_clinician_id: str | None = None
 
     def _process_recipient(recipient: Recipient, sender: Any | None) -> None:
         nonlocal eligible, sent, skipped, errors, new_keys_written
@@ -335,8 +345,11 @@ def run(
             findings.append(f"**Critical** - Sender unavailable for recipient `{token}`.")
             return
 
+        if not acorn_clinician_id:
+            raise RuntimeError("ACORN_CLINICIAN_ID was not resolved for confirm-send mode.")
+
         result = sender.send_mobile_form(
-            clinician_id=os.getenv("ACORN_CLINICIAN_ID", "ALL"),
+            clinician_id=acorn_clinician_id,
             form_value=FORM_VALUE,
             client_id=client_id,
             phone=normalized_phone,
@@ -363,6 +376,7 @@ def run(
             raise ValueError(
                 "Confirm-send is disabled. Set ACORN_ENABLE_CONFIRM_SEND=true to allow live sends."
             )
+        acorn_clinician_id = _resolve_acorn_clinician_id()
         acorn_user = os.getenv("ACORN_USERNAME", "").strip()
         acorn_password = os.getenv("ACORN_PASSWORD", "").strip()
         if not acorn_user or not acorn_password:
