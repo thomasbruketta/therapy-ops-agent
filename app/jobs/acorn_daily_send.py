@@ -16,11 +16,12 @@ from zoneinfo import ZoneInfo
 from app.utils.identity import compute_client_id
 from app.utils.idempotency import IdempotencyStore, build_idempotency_key
 from app.utils.phone import validate_phone
+from app.utils.runtime_paths import runtime_path
 
 MESSAGE_TEMPLATE = "Good morning! Please complete your Acorn assessment before session today. See you soon!"
 FORM_VALUE = "Adult-Ver14-UNIV-28236-Online.pdf"
 SEND_VIA = "text"
-DEFAULT_ARTIFACT_ROOT = "/tmp/therapy-ops-agent/artifacts/runs"
+DEFAULT_ARTIFACT_ROOT = str(runtime_path("artifacts", "runs"))
 DEFAULT_RECIPIENTS_PATH = "state/acorn_recipients.json"
 PACIFIC_TZ = ZoneInfo("America/Los_Angeles")
 
@@ -140,7 +141,12 @@ def _load_recipients_from_simplepractice(target_date: Date) -> list[Recipient]:
     username = os.getenv("SIMPLEPRACTICE_USERNAME", "").strip() or None
     password = os.getenv("SIMPLEPRACTICE_PASSWORD", "").strip() or None
     mfa_code = os.getenv("SIMPLEPRACTICE_MFA_CODE", "").strip() or None
-    state_path = Path(os.getenv("SIMPLEPRACTICE_SESSION_STATE_PATH", "browser/simplepractice_session.json"))
+    state_path = Path(
+        os.getenv(
+            "SIMPLEPRACTICE_SESSION_STATE_PATH",
+            str(runtime_path("browser", "simplepractice_session.json")),
+        )
+    )
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(
@@ -187,7 +193,7 @@ def _render_output_path(default_name: str, env_template_key: str, *, mode: str, 
                 timestamp=timestamp,
             )
         )
-    root = Path(os.getenv("ACORN_ARTIFACT_ROOT", "/tmp/therapy-ops-agent/artifacts/runs"))
+    root = Path(os.getenv("ACORN_ARTIFACT_ROOT", str(runtime_path("artifacts", "runs"))))
     return root / default_name
 
 
@@ -297,7 +303,7 @@ def run(
     run_id = _build_run_id(mode)
     idempotency_store_path = os.getenv(
         "ACORN_IDEMPOTENCY_STORE_PATH",
-        "/tmp/therapy-ops-agent/state/acorn_idempotency_store.json",
+        str(runtime_path("state", "acorn_idempotency_store.json")),
     )
     store = IdempotencyStore(idempotency_store_path)
 

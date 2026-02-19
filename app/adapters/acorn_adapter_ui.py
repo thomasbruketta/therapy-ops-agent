@@ -9,6 +9,8 @@ import time
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
+from app.utils.runtime_paths import runtime_path
+
 
 @dataclass
 class SendResult:
@@ -25,7 +27,7 @@ class AcornAdapterUI:
     def __init__(
         self,
         page: Page,
-        screenshots_dir: Path | str = "/tmp/therapy-ops-agent/artifacts/screenshots",
+        screenshots_dir: Path | str = runtime_path("artifacts", "screenshots"),
         login_url: str | None = None,
         mobile_form_url: str | None = None,
     ) -> None:

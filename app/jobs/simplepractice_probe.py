@@ -8,6 +8,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+from app.utils.runtime_paths import runtime_path
+
 
 def _page_snapshot(page) -> dict:
     return page.evaluate(
@@ -42,7 +44,7 @@ def main() -> None:
     out_dir = Path(
         os.environ.get(
             "SIMPLEPRACTICE_PROBE_OUTPUT_DIR",
-            "/tmp/therapy-ops-agent/artifacts/selector_probe",
+            str(runtime_path("artifacts", "selector_probe")),
         )
     )
     out_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -50,7 +52,7 @@ def main() -> None:
     state_path = Path(
         os.environ.get(
             "SIMPLEPRACTICE_SESSION_STATE_PATH",
-            "/tmp/therapy-ops-agent/browser/simplepractice_session.json",
+            str(runtime_path("browser", "simplepractice_session.json")),
         )
     )
     if not state_path.exists():

@@ -4,8 +4,9 @@ import json
 import os
 from pathlib import Path
 
+from app.utils.runtime_paths import runtime_path
 
-DEFAULT_STORE_PATH = Path("/tmp/therapy-ops-agent/state/acorn_idempotency_store.json")
+DEFAULT_STORE_PATH = runtime_path("state", "acorn_idempotency_store.json")
 
 
 def build_idempotency_key(date: str, client_id: str) -> str:

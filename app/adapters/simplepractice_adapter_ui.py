@@ -13,6 +13,8 @@ from zoneinfo import ZoneInfo
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
+from app.utils.runtime_paths import runtime_path
+
 
 @dataclass
 class Appointment:
@@ -39,7 +41,7 @@ class SimplePracticeAdapterUI:
     def __init__(
         self,
         page: Page,
-        screenshots_dir: Path | str = "/tmp/therapy-ops-agent/artifacts/screenshots",
+        screenshots_dir: Path | str = runtime_path("artifacts", "screenshots"),
         base_url: str | None = None,
         session_state_path: str | Path | None = None,
     ) -> None:
@@ -48,7 +50,10 @@ class SimplePracticeAdapterUI:
         self.base_url = (base_url or os.getenv("SIMPLEPRACTICE_BASE_URL", "https://account.simplepractice.com/")).rstrip("/")
         self.session_state_path = Path(
             session_state_path
-            or os.getenv("SIMPLEPRACTICE_SESSION_STATE_PATH", "/tmp/therapy-ops-agent/browser/simplepractice_session.json")
+            or os.getenv(
+                "SIMPLEPRACTICE_SESSION_STATE_PATH",
+                str(runtime_path("browser", "simplepractice_session.json")),
+            )
         )
         self._validate_secure_url(self.base_url, "SIMPLEPRACTICE_BASE_URL")
 

@@ -18,7 +18,7 @@ dryrun:
 
 confirm-send:
 	@if [ "$$ACORN_ENABLE_CONFIRM_SEND" != "true" ]; then echo "ACORN_ENABLE_CONFIRM_SEND=true is required for live sends"; exit 1; fi
-	$(DC) run --rm therapy-agent python -m app.jobs.acorn_daily_send --date $(DATE) --confirm-send --source simplepractice
+	$(DC) run --rm -e ACORN_ENABLE_CONFIRM_SEND=$$ACORN_ENABLE_CONFIRM_SEND therapy-agent python -m app.jobs.acorn_daily_send --date $(DATE) --confirm-send --source simplepractice
 
 refresh-session:
 	@if [ -z "$(MFA_CODE)" ]; then echo "MFA_CODE is required"; exit 1; fi
