@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 import os
 from pathlib import Path
+import re
 from typing import Any, Callable, TypeVar
 import time
 from urllib.parse import urlencode
@@ -158,6 +159,48 @@ class SimplePracticeAdapterUI:
         return response.json()
 
     @staticmethod
+    def _required_service_codes() -> set[str]:
+        raw = os.getenv("ACORN_REQUIRED_SERVICE_CODES", "90837")
+        codes: set[str] = set()
+        for part in raw.split(","):
+            code = part.strip()
+            if code:
+                codes.add(code.upper())
+        if not codes:
+            codes.add("90837")
+        return codes
+
+    @staticmethod
+    def _appointment_service_fields(item: dict[str, Any]) -> list[str]:
+        attrs = item.get("attributes", {}) if isinstance(item, dict) else {}
+        candidates = [
+            attrs.get("title"),
+            attrs.get("thisType"),
+            attrs.get("serviceCode"),
+            attrs.get("cptCode"),
+            attrs.get("code"),
+        ]
+        return [str(value) for value in candidates if isinstance(value, str) and value.strip()]
+
+    @classmethod
+    def _appointment_matches_service_codes(
+        cls,
+        item: dict[str, Any],
+        required_codes: set[str],
+    ) -> bool:
+        fields = cls._appointment_service_fields(item)
+        if not fields:
+            return False
+
+        # Match complete service code tokens to avoid partial numeric hits.
+        patterns = [re.compile(rf"(?<!\d){re.escape(code)}(?!\d)", re.IGNORECASE) for code in required_codes]
+        for field in fields:
+            for pattern in patterns:
+                if pattern.search(field):
+                    return True
+        return False
+
+    @staticmethod
     def _time_range_for_date(target_date: date, tz_name: str = "America/Los_Angeles") -> tuple[str, str]:
         tz = ZoneInfo(tz_name)
         start = datetime(target_date.year, target_date.month, target_date.day, 0, 0, tzinfo=tz)
@@ -174,6 +217,7 @@ class SimplePracticeAdapterUI:
     ) -> list[dict[str, str]]:
         """Fetch unique {full_name, phone} recipients for a clinician's day schedule."""
         start_iso, end_iso = self._time_range_for_date(target_date, timezone_name)
+        required_codes = self._required_service_codes()
 
         appointments_payload = self._frontend_get(
             "/frontend/appointments",
@@ -186,6 +230,8 @@ class SimplePracticeAdapterUI:
         client_ids: set[str] = set()
         for item in appointments_payload.get("data", []):
             if item.get("type") != "appointments":
+                continue
+            if not self._appointment_matches_service_codes(item, required_codes):
                 continue
             relationships = item.get("relationships", {})
             rel_client = (relationships.get("client") or {}).get("data")

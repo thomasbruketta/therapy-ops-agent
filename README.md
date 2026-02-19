@@ -115,6 +115,8 @@ The daily job supports two recipient sources:
 - `simplepractice` (default): extracts today's clients from SimplePractice for `SIMPLEPRACTICE_CLINICIAN_ID`
 - `recipients`: reads `ACORN_RECIPIENTS_PATH` (default `state/acorn_recipients.json`)
 
+For `simplepractice`, recipients are filtered to appointments whose service code matches `ACORN_REQUIRED_SERVICE_CODES` (default `90837`).
+
 For `simplepractice`, refresh auth session state first:
 
 ```bash
