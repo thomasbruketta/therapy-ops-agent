@@ -2,6 +2,8 @@
 
 This repository includes a dedicated scheduler process and a live ACORN mobile-form send workflow.
 
+For full operator/agent context and recent decisions, see `/Users/tbruketta/Dev/therapy-ops-agent/docs/AGENT_HANDOFF_2026-02-19.md`.
+
 ## Container-first execution
 
 Default recommended run model is container-first:
