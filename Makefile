@@ -2,7 +2,7 @@ DC := docker compose
 DATE ?= $(shell date +%F)
 MFA_CODE ?=
 
-.PHONY: build scheduler scheduler-once dryrun confirm-send refresh-session purge-runtime test
+.PHONY: build scheduler scheduler-once dryrun confirm-send refresh-session purge-runtime test send-today-now
 
 build:
 	$(DC) build therapy-agent
@@ -29,3 +29,6 @@ purge-runtime:
 
 test:
 	$(DC) run --rm therapy-agent python -m pytest -q -p no:cacheprovider
+
+send-today-now:
+	python3 scripts/automation/run_daily_automation.py --mode send

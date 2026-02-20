@@ -16,6 +16,31 @@ This file is the current-state handoff for future agents/operators so they can w
 - One-off send commands:
   - Dry-run: `make dryrun DATE=YYYY-MM-DD`
   - Confirm-send: see "Live Send Controls" below.
+- Host automation command:
+  - `make send-today-now`
+
+## Host Automation (Mac launchd)
+- Objective: unattended Tue-Fri morning operations at near-zero cost.
+- Runner:
+  - `/Users/tbruketta/Dev/therapy-ops-agent/scripts/automation/run_daily_automation.py`
+- launchd templates:
+  - `/Users/tbruketta/Dev/therapy-ops-agent/ops/launchd/com.therapyops.acorn-preflight.plist` (07:45)
+  - `/Users/tbruketta/Dev/therapy-ops-agent/ops/launchd/com.therapyops.acorn-send.plist` (08:00)
+- Outlook report sender:
+  - `/Users/tbruketta/Dev/therapy-ops-agent/scripts/automation/send_outlook_report.applescript`
+- Installer/uninstaller:
+  - `/Users/tbruketta/Dev/therapy-ops-agent/scripts/automation/install_launchd.sh`
+  - `/Users/tbruketta/Dev/therapy-ops-agent/scripts/automation/uninstall_launchd.sh`
+
+Expected statuses from runner:
+- `SUCCESS`
+- `NEEDS_MFA` (requires `make refresh-session MFA_CODE=<code>`)
+- `FAILED`
+
+Host env vars:
+- `ACORN_AUTOMATION_REPORT_TO`
+- `ACORN_DOCKER_READY_TIMEOUT_SEC` (default `120`)
+- `ACORN_AUTOMATION_LOG_DIR` (default `~/Library/Logs/therapy-ops-agent`)
 
 ## Live Send Controls (Fail-Closed)
 - `ACORN_ENABLE_CONFIRM_SEND` must be `true` for live sends.
@@ -64,6 +89,7 @@ Examples:
 ## Key Files For Future Agents
 - Scheduler: `/Users/tbruketta/Dev/therapy-ops-agent/app/jobs/scheduler.py`
 - Daily send entrypoint: `/Users/tbruketta/Dev/therapy-ops-agent/app/jobs/acorn_daily_send.py`
+- SimplePractice auth preflight check: `/Users/tbruketta/Dev/therapy-ops-agent/app/jobs/simplepractice_auth_check.py`
 - SimplePractice adapter: `/Users/tbruketta/Dev/therapy-ops-agent/app/adapters/simplepractice_adapter_ui.py`
 - ACORN adapter: `/Users/tbruketta/Dev/therapy-ops-agent/app/adapters/acorn_adapter_ui.py`
 - Identity/client_id rules: `/Users/tbruketta/Dev/therapy-ops-agent/app/utils/identity.py`
@@ -85,6 +111,17 @@ Examples:
        - `docker compose run --rm -e ACORN_ENABLE_CONFIRM_SEND=true therapy-agent python -m app.jobs.acorn_daily_send --date YYYY-MM-DD --confirm-send --source simplepractice`
 4. If needed, purge runtime state:
    - `make purge-runtime`
+
+## Automated Morning Workflow (Current)
+1. Install launchd agents:
+   - `./scripts/automation/install_launchd.sh`
+2. 07:45 preflight job runs auth check:
+   - `python -m app.jobs.simplepractice_auth_check --json-output`
+3. 08:00 send job runs full automation:
+   - preflight gate, then `confirm-send` if authenticated
+4. Outlook email report sent after each run (status + totals, no PHI)
+5. If `NEEDS_MFA`, run:
+   - `make refresh-session MFA_CODE=<6-digit>`
 
 ## Security/HIPAA Posture (Implemented)
 - Container hardening: non-root, read-only root FS, dropped capabilities, `no-new-privileges`.
@@ -110,4 +147,3 @@ Examples:
 - For next live send day:
   - refresh session if needed
   - dry-run, review, then confirm-send
-

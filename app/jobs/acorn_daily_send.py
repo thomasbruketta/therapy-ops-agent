@@ -81,6 +81,11 @@ def _parse_args() -> argparse.Namespace:
         default=os.getenv("ACORN_RECIPIENT_SOURCE", "simplepractice"),
         help="Recipient source: recipients file/inline or SimplePractice extraction.",
     )
+    parser.add_argument(
+        "--json-output",
+        action="store_true",
+        help="Emit a machine-readable JSON payload to stdout.",
+    )
     return parser.parse_args()
 
 
@@ -287,7 +292,7 @@ def run(
     recipients_path: str | Path = DEFAULT_RECIPIENTS_PATH,
     inline_recipients: list[str] | None = None,
     recipient_source: str = "simplepractice",
-) -> dict[str, str]:
+) -> dict[str, Any]:
     """Run Acorn daily send with dry-run/confirm-send controls."""
     inline_recipients = inline_recipients or []
     if recipient_source == "simplepractice":
@@ -416,14 +421,25 @@ def run(
         findings=findings,
     )
 
+    totals = {
+        "evaluated": evaluated,
+        "eligible": eligible,
+        "sent_or_would_send": sent,
+        "skipped": skipped,
+        "errors": errors,
+    }
+
     return {
         "run_id": run_id,
+        "date": date.isoformat(),
+        "mode": mode,
+        "totals": totals,
         "summary_path": str(summary_path),
         "triage_path": str(triage_path),
     }
 
 
-def main() -> None:
+def main() -> int:
     args = _parse_args()
     confirm_send = bool(args.confirm_send)
     dry_run = bool(args.dry_run) or not confirm_send
@@ -435,11 +451,13 @@ def main() -> None:
         inline_recipients=args.recipient,
         recipient_source=args.source,
     )
-    print(
-        f"Run {result['run_id']} complete. "
-        f"summary={result['summary_path']} triage={result['triage_path']}"
-    )
+    if args.json_output:
+        print(json.dumps(result, sort_keys=True))
+        return 0
+
+    print(f"Run {result['run_id']} complete. summary={result['summary_path']} triage={result['triage_path']}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

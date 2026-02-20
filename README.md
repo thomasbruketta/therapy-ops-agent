@@ -20,6 +20,7 @@ Build and run with:
 make build
 make scheduler-once
 make test
+make send-today-now
 ```
 
 For normal operation:
@@ -34,6 +35,58 @@ For one-off runs:
 make dryrun DATE=2026-02-14
 ACORN_ENABLE_CONFIRM_SEND=true make confirm-send DATE=2026-02-14
 ```
+
+## Mac launchd automation (zero-cost)
+
+This repository now includes a host-side automation runner for unattended daily execution on macOS.
+
+- `07:45` Tue-Fri: preflight auth check (`SimplePractice` session validity)
+- `08:00` Tue-Fri: live send execution (`confirm-send` with fail-closed opt-in)
+- Post-run Outlook email report with status and sanitized totals
+
+Automation files:
+
+- Host runner: `scripts/automation/run_daily_automation.py`
+- Outlook sender: `scripts/automation/send_outlook_report.applescript`
+- launchd templates: `ops/launchd/com.therapyops.acorn-preflight.plist`, `ops/launchd/com.therapyops.acorn-send.plist`
+- install/uninstall helpers: `scripts/automation/install_launchd.sh`, `scripts/automation/uninstall_launchd.sh`
+
+Setup:
+
+```bash
+# 1) set your report email in .env.local
+# ACORN_AUTOMATION_REPORT_TO=you@example.com
+
+# 2) install launchd agents
+./scripts/automation/install_launchd.sh
+
+# 3) run one immediate check/send manually
+make send-today-now
+```
+
+Dry-run validation of host runner without live send:
+
+```bash
+python3 scripts/automation/run_daily_automation.py --mode send --dry-run-send
+```
+
+Preflight-only execution:
+
+```bash
+python3 scripts/automation/run_daily_automation.py --mode preflight
+```
+
+If you need to remove automation:
+
+```bash
+./scripts/automation/uninstall_launchd.sh
+```
+
+Power/sleep requirements for clamshell mode:
+
+- Keep Mac on power.
+- Prevent overnight sleep during run windows.
+- Keep external display/keyboard path active so scheduled jobs can run.
 
 `confirm-send` is fail-closed and requires explicit opt-in:
 
@@ -52,6 +105,12 @@ To refresh SimplePractice session state:
 
 ```bash
 make refresh-session MFA_CODE=123456
+```
+
+To validate only auth/session state (no send):
+
+```bash
+docker compose run --rm therapy-agent python -m app.jobs.simplepractice_auth_check --json-output
 ```
 
 To probe authenticated SimplePractice pages for selector discovery:
@@ -150,4 +209,14 @@ Manual dry-run/confirm-send for a specific date:
 python -m app.jobs.acorn_daily_send --date 2026-02-13 --dry-run
 python -m app.jobs.acorn_daily_send --date 2026-02-13 --confirm-send
 python -m app.jobs.acorn_daily_send --date 2026-02-13 --dry-run --source recipients
+python -m app.jobs.acorn_daily_send --date 2026-02-13 --dry-run --json-output
 ```
+
+## Troubleshooting
+
+- Docker not ready: start Docker Desktop and rerun `make send-today-now`.
+- Preflight reports `NEEDS_MFA`: run `make refresh-session MFA_CODE=<6-digit>`.
+- No report email sent: set `ACORN_AUTOMATION_REPORT_TO` and ensure Outlook desktop is installed/configured.
+- launchd verification:
+  - `launchctl print gui/$UID/com.therapyops.acorn-preflight`
+  - `launchctl print gui/$UID/com.therapyops.acorn-send`
