@@ -227,7 +227,10 @@ class SimplePracticeAdapterUI:
         appointments_payload = self._frontend_get(
             "/frontend/appointments",
             params={
-                "fields[appointments]": "client,title,startTime,endTime,thisType,clinicianId,attendanceStatus",
+                "fields[appointments]": (
+                    "client,title,startTime,endTime,thisType,clinicianId,attendanceStatus,"
+                    "serviceCode,cptCode,code"
+                ),
                 "filter[timeRange]": f"{start_iso},{end_iso}",
                 "filter[clinicianId]": clinician_id,
             },

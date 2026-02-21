@@ -12,14 +12,14 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from zoneinfo import ZoneInfo
 
 PACIFIC_TZ = ZoneInfo("America/Los_Angeles")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 APPLE_SCRIPT_PATH = REPO_ROOT / "scripts" / "automation" / "send_outlook_report.applescript"
 
-CommandRunner = Callable[[list[str], Path | None, dict[str, str] | None], "CommandResult"]
+CommandRunner = Callable[[list[str], Optional[Path], Optional[dict[str, str]]], "CommandResult"]
 SleepFn = Callable[[float], None]
 
 
