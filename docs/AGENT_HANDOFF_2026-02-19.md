@@ -26,8 +26,6 @@ This file is the current-state handoff for future agents/operators so they can w
 - launchd templates:
   - `/Users/tbruketta/Dev/therapy-ops-agent/ops/launchd/com.therapyops.acorn-preflight.plist` (07:45)
   - `/Users/tbruketta/Dev/therapy-ops-agent/ops/launchd/com.therapyops.acorn-send.plist` (08:00)
-- Outlook report sender:
-  - `/Users/tbruketta/Dev/therapy-ops-agent/scripts/automation/send_outlook_report.applescript`
 - Installer/uninstaller:
   - `/Users/tbruketta/Dev/therapy-ops-agent/scripts/automation/install_launchd.sh`
   - `/Users/tbruketta/Dev/therapy-ops-agent/scripts/automation/uninstall_launchd.sh`
@@ -38,9 +36,8 @@ Expected statuses from runner:
 - `FAILED`
 
 Host env vars:
-- `ACORN_AUTOMATION_REPORT_TO`
 - `ACORN_DOCKER_READY_TIMEOUT_SEC` (default `120`)
-- `ACORN_AUTOMATION_LOG_DIR` (default `~/Library/Logs/therapy-ops-agent`)
+- `ACORN_AUTOMATION_LOG_DIR` (recommended: repo-local state directory)
 
 ## Live Send Controls (Fail-Closed)
 - `ACORN_ENABLE_CONFIRM_SEND` must be `true` for live sends.
@@ -119,7 +116,7 @@ Examples:
    - `python -m app.jobs.simplepractice_auth_check --json-output`
 3. 08:00 send job runs full automation:
    - preflight gate, then `confirm-send` if authenticated
-4. Outlook email report sent after each run (status + totals, no PHI)
+4. Local JSON/log report written after each run (status + totals, no PHI)
 5. If `NEEDS_MFA`, run:
    - `make refresh-session MFA_CODE=<6-digit>`
 

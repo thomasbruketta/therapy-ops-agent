@@ -31,4 +31,4 @@ test:
 	$(DC) run --rm therapy-agent python -m pytest -q -p no:cacheprovider
 
 send-today-now:
-	python3 scripts/automation/run_daily_automation.py --mode send
+	python3 scripts/automation/run_daily_automation.py --mode send --skip-email

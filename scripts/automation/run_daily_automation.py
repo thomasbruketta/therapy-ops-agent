@@ -35,7 +35,7 @@ def _resolve_log_dir() -> Path:
     configured = os.getenv("ACORN_AUTOMATION_LOG_DIR", "").strip()
     if configured:
         return Path(configured).expanduser()
-    return Path.home() / "Library" / "Logs" / "therapy-ops-agent"
+    return REPO_ROOT / "state" / "automation_logs"
 
 
 def configure_logging(log_dir: Path) -> Path:

@@ -42,20 +42,19 @@ This repository now includes a host-side automation runner for unattended daily 
 
 - `07:45` Tue-Fri: preflight auth check (`SimplePractice` session validity)
 - `08:00` Tue-Fri: live send execution (`confirm-send` with fail-closed opt-in)
-- Post-run Outlook email report with status and sanitized totals
+- Post-run local JSON/log report with sanitized totals (no names/phones)
 
 Automation files:
 
 - Host runner: `scripts/automation/run_daily_automation.py`
-- Outlook sender: `scripts/automation/send_outlook_report.applescript`
 - launchd templates: `ops/launchd/com.therapyops.acorn-preflight.plist`, `ops/launchd/com.therapyops.acorn-send.plist`
 - install/uninstall helpers: `scripts/automation/install_launchd.sh`, `scripts/automation/uninstall_launchd.sh`
 
 Setup:
 
 ```bash
-# 1) set your report email in .env.local
-# ACORN_AUTOMATION_REPORT_TO=you@example.com
+# 1) set local report directory in .env.local
+# ACORN_AUTOMATION_LOG_DIR=/Users/tbruketta/Dev/therapy-ops-agent/state/automation_logs
 
 # 2) install launchd agents
 ./scripts/automation/install_launchd.sh
@@ -216,7 +215,7 @@ python -m app.jobs.acorn_daily_send --date 2026-02-13 --dry-run --json-output
 
 - Docker not ready: start Docker Desktop and rerun `make send-today-now`.
 - Preflight reports `NEEDS_MFA`: run `make refresh-session MFA_CODE=<6-digit>`.
-- No report email sent: set `ACORN_AUTOMATION_REPORT_TO` and ensure Outlook desktop is installed/configured.
+- Local reports are written to `ACORN_AUTOMATION_LOG_DIR` (default under `~/Library/Logs/therapy-ops-agent` if unset).
 - launchd verification:
   - `launchctl print gui/$UID/com.therapyops.acorn-preflight`
   - `launchctl print gui/$UID/com.therapyops.acorn-send`

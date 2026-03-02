@@ -5,9 +5,10 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 TEMPLATE_DIR="$REPO_ROOT/ops/launchd"
 DEST_DIR="$HOME/Library/LaunchAgents"
-LOG_DIR="${ACORN_AUTOMATION_LOG_DIR:-$HOME/Library/Logs/therapy-ops-agent}"
+default_log_dir="$HOME/Library/Logs/therapy-ops-agent"
+resolved_log_dir="${ACORN_AUTOMATION_LOG_DIR:-$default_log_dir}"
 
-mkdir -p "$DEST_DIR" "$LOG_DIR"
+mkdir -p "$DEST_DIR"
 
 report_to="${ACORN_AUTOMATION_REPORT_TO:-}"
 docker_timeout="${ACORN_DOCKER_READY_TIMEOUT_SEC:-120}"
@@ -23,6 +24,14 @@ if [[ -z "${ACORN_DOCKER_READY_TIMEOUT_SEC:-}" && -f "$REPO_ROOT/.env.local" ]];
   fi
 fi
 
+if [[ -z "${ACORN_AUTOMATION_LOG_DIR:-}" && -f "$REPO_ROOT/.env.local" ]]; then
+  parsed_log_dir="$(grep -E '^ACORN_AUTOMATION_LOG_DIR=' "$REPO_ROOT/.env.local" | tail -n 1 | cut -d '=' -f2- | tr -d '"' | tr -d "'" || true)"
+  if [[ -n "$parsed_log_dir" ]]; then
+    resolved_log_dir="$parsed_log_dir"
+  fi
+fi
+mkdir -p "$resolved_log_dir"
+
 escape_sed() {
   printf '%s' "$1" | sed -e 's/[\/&]/\\&/g'
 }
@@ -33,6 +42,7 @@ render_template() {
   sed \
     -e "s|__REPO_ROOT__|$(escape_sed "$REPO_ROOT")|g" \
     -e "s|__HOME__|$(escape_sed "$HOME")|g" \
+    -e "s|__LOG_DIR__|$(escape_sed "$resolved_log_dir")|g" \
     -e "s|__REPORT_TO__|$(escape_sed "$report_to")|g" \
     -e "s|__DOCKER_TIMEOUT__|$(escape_sed "$docker_timeout")|g" \
     "$template_path" > "$output_path"
@@ -66,7 +76,7 @@ install_agent() {
 install_agent "com.therapyops.acorn-preflight"
 install_agent "com.therapyops.acorn-send"
 
-echo "LaunchAgents installed. Logs: $LOG_DIR"
+echo "LaunchAgents installed. Logs: $resolved_log_dir"
 if [[ -z "$report_to" ]]; then
   echo "Warning: ACORN_AUTOMATION_REPORT_TO is empty; report emails will be skipped." >&2
 fi

@@ -11,6 +11,7 @@
     <string>__REPO_ROOT__/scripts/automation/run_daily_automation.py</string>
     <string>--mode</string>
     <string>preflight</string>
+    <string>--skip-email</string>
   </array>
 
   <key>WorkingDirectory</key>
@@ -25,13 +26,13 @@
     <key>ACORN_DOCKER_READY_TIMEOUT_SEC</key>
     <string>__DOCKER_TIMEOUT__</string>
     <key>ACORN_AUTOMATION_LOG_DIR</key>
-    <string>__HOME__/Library/Logs/therapy-ops-agent</string>
+    <string>__LOG_DIR__</string>
   </dict>
 
   <key>StandardOutPath</key>
-  <string>__HOME__/Library/Logs/therapy-ops-agent/launchd-preflight.out.log</string>
+  <string>__LOG_DIR__/launchd-preflight.out.log</string>
   <key>StandardErrorPath</key>
-  <string>__HOME__/Library/Logs/therapy-ops-agent/launchd-preflight.err.log</string>
+  <string>__LOG_DIR__/launchd-preflight.err.log</string>
 
   <key>RunAtLoad</key>
   <false/>
