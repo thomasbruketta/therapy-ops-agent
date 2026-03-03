@@ -57,7 +57,7 @@ def test_appointment_does_not_match_partial_numeric_token() -> None:
     assert SimplePracticeAdapterUI._appointment_matches_service_codes(item, {"90837"}) is False
 
 
-def test_fetch_daily_recipients_uses_service_code_fields_and_matches_service_code() -> None:
+def test_fetch_daily_recipients_uses_schema_safe_fields_and_matches_this_type_code() -> None:
     class _FakePage:
         def __init__(self) -> None:
             self.context = object()
@@ -73,9 +73,8 @@ def test_fetch_daily_recipients_uses_service_code_fields_and_matches_service_cod
                     {
                         "type": "appointments",
                         "attributes": {
-                            "title": "Psychotherapy Session",
-                            "thisType": "Appointment",
-                            "serviceCode": "90837",
+                            "title": "Jane Testuser",
+                            "thisType": "Service: 90837",
                         },
                         "relationships": {
                             "client": {"data": {"type": "clients", "id": "c1"}},
@@ -103,7 +102,5 @@ def test_fetch_daily_recipients_uses_service_code_fields_and_matches_service_cod
         clinician_id="123",
     )
 
-    assert "serviceCode" in captured_appointments_fields["value"]
-    assert "cptCode" in captured_appointments_fields["value"]
-    assert "code" in captured_appointments_fields["value"]
+    assert captured_appointments_fields["value"] == "client,title,startTime,endTime,thisType,clinicianId,attendanceStatus"
     assert recipients == [{"full_name": "Jane Testuser", "phone": "+15555550123"}]
